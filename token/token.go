@@ -1,9 +1,42 @@
 package token
 
 import (
+	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+)
+
+// Config defines how JWTs are generated and verified.
+type Config struct {
+	// Secret is the HMAC signing key (HS256).
+	Secret []byte
+
+	// Issuer identifies who minted the token (iss).
+	Issuer string
+
+	// Audience identifies who the token is intended for (aud).
+	Audience string
+
+	// TTL controls token lifetime.
+	TTL time.Duration
+}
+
+// Claims represents authkit claims plus standard JWT registered claims.
+type Claims struct {
+	Roles []string `json:"roles,omitempty"`
+	jwt.RegisteredClaims
+}
+
+var (
+	// ErrSecretRequired is returned when a secret is not provided.
+	ErrSecretRequired = errors.New("token: secret is required")
+
+	// ErrInvalidToken is returned when a token is invalid.
+	ErrInvalidToken = errors.New("token: invalid token")
+
+	// ErrExpiredToken is returned when a token has expired.
+	ErrExpiredToken = errors.New("token: token has expired")
 )
 
 // GenerateToken signs the provided claims with the config defaults.

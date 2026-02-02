@@ -68,6 +68,20 @@ protected := middleware.RequireJWT(cfg)(http.HandlerFunc(func(w http.ResponseWri
     _ = claims
     w.WriteHeader(http.StatusOK)
 }))
+
+// Optional: customize header name, scheme, or error handling
+protected = middleware.RequireJWTWithOptions(cfg, middleware.Options{
+    HeaderName: "X-Auth",
+    Scheme:     "Bearer",
+    ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+        http.Error(w, "unauthorized", http.StatusUnauthorized)
+    },
+})(protected)
+
+// Optional: fetch claims directly from a context
+claims, ok := middleware.ClaimsFromContext(context.Background())
+_ = claims
+_ = ok
 ```
 
 ### Testing

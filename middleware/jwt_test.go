@@ -243,6 +243,123 @@ func TestRequireJWT_ClaimsInContext(t *testing.T) {
 	}
 }
 
+func TestRequireJWTWithOptions_CustomHeaderName(t *testing.T) {
+	cfg := token.Config{
+		Secret: []byte("test-secret"),
+		TTL:    time.Hour,
+	}
+
+	tokenStr, err := token.GenerateToken(cfg, token.Claims{})
+	if err != nil {
+		t.Fatalf("failed to generate token: %v", err)
+	}
+
+	nextCalled := false
+	handler := middleware.RequireJWTWithOptions(cfg, middleware.Options{
+		HeaderName: "X-Auth",
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nextCalled = true
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+	req.Header.Set("X-Auth", "Bearer "+tokenStr)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+	if !nextCalled {
+		t.Fatal("expected next handler to be called")
+	}
+}
+
+func TestRequireJWTWithOptions_SchemeCaseInsensitive(t *testing.T) {
+	cfg := token.Config{
+		Secret: []byte("test-secret"),
+		TTL:    time.Hour,
+	}
+
+	tokenStr, err := token.GenerateToken(cfg, token.Claims{})
+	if err != nil {
+		t.Fatalf("failed to generate token: %v", err)
+	}
+
+	handler := middleware.RequireJWTWithOptions(cfg, middleware.Options{})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+	req.Header.Set("Authorization", "bearer "+tokenStr)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+}
+
+func TestRequireJWTWithOptions_CustomErrorHandler(t *testing.T) {
+	cfg := token.Config{
+		Secret: []byte("test-secret"),
+		TTL:    time.Hour,
+	}
+
+	customStatus := http.StatusTeapot
+	handler := middleware.RequireJWTWithOptions(cfg, middleware.Options{
+		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, "custom error", customStatus)
+		},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != customStatus {
+		t.Fatalf("expected status %d, got %d", customStatus, rec.Code)
+	}
+	if rec.Body.String() != "custom error\n" {
+		t.Fatalf("unexpected response body: %s", rec.Body.String())
+	}
+}
+
+func TestClaimsFromContext(t *testing.T) {
+	cfg := token.Config{
+		Secret: []byte("test-secret"),
+		TTL:    time.Hour,
+	}
+
+	tokenStr, err := token.GenerateToken(cfg, token.Claims{})
+	if err != nil {
+		t.Fatalf("failed to generate token: %v", err)
+	}
+
+	handler := middleware.RequireJWT(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		claims, ok := middleware.ClaimsFromContext(r.Context())
+		if !ok || claims == nil {
+			t.Fatal("expected claims in context")
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+	req.Header.Set("Authorization", "Bearer "+tokenStr)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+}
+
 func TestGetClaims_NoClaims(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
