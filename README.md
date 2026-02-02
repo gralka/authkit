@@ -12,6 +12,7 @@ embed into other apps — not a full-featured auth framework.
 ### Contents
 - password: utilities for hashing and verifying passwords ([password/password.go](password/password.go)).
 - token: token creation and verification helpers ([token/token.go](token/token.go)).
+- middleware: HTTP middleware helpers for validating tokens and attaching claims to request context ([middleware/jwt.go](middleware/jwt.go)).
 
 ## Quickstart
 
@@ -39,6 +40,7 @@ Example (pseudo):
 import (
     "github.com/gralka/authkit/password"
     "github.com/gralka/authkit/token"
+    "github.com/gralka/authkit/middleware"
 )
 
 // Hash a password
@@ -49,6 +51,23 @@ ok := password.Verify(hash, "secret123")
 
 // Create and validate tokens with the token package
 _ = token
+
+// Protect an HTTP handler with RequireJWT
+cfg := token.Config{
+    Secret: []byte("my-secret"),
+    TTL:    time.Hour,
+}
+
+protected := middleware.RequireJWT(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    claims, ok := middleware.GetClaims(r)
+    if !ok {
+        http.Error(w, "missing claims", http.StatusForbidden)
+        return
+    }
+
+    _ = claims
+    w.WriteHeader(http.StatusOK)
+}))
 ```
 
 ### Testing

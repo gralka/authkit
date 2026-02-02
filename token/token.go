@@ -17,7 +17,7 @@ func GenerateToken(cfg Config, claims Claims) (string, error) {
 	if claims.IssuedAt == nil {
 		claims.IssuedAt = jwt.NewNumericDate(now)
 	}
-	if claims.ExpiresAt == nil && cfg.TTL > 0 {
+	if claims.ExpiresAt == nil && cfg.TTL != 0 {
 		claims.ExpiresAt = jwt.NewNumericDate(now.Add(cfg.TTL))
 	}
 	if claims.Issuer == "" && cfg.Issuer != "" {
