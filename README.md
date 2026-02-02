@@ -87,6 +87,10 @@ protectedWithCustomOptions := middleware.RequireJWTWithOptions(cfg, middleware.O
     w.WriteHeader(http.StatusOK)
 }))
 
+// Use the handlers in your routes
+http.Handle("/api/protected", protected)
+http.Handle("/api/custom", protectedWithCustomOptions)
+
 // Optional: fetch claims directly from a context
 claims, ok := middleware.ClaimsFromContext(context.Background())
 _ = claims
