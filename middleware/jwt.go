@@ -24,26 +24,19 @@ func RequireJWT(cfg token.Config) func(http.Handler) http.Handler {
 				return
 			}
 
-			trimmed := strings.TrimSpace(authHeader)
-			if !strings.HasPrefix(trimmed, "Bearer") {
-				http.Error(w, "invalid authorization format", http.StatusUnauthorized)
-				return
-			}
-			parts := strings.Fields(trimmed)
-			if len(parts) == 1 {
-				if strings.HasPrefix(authHeader, "Bearer ") || strings.HasPrefix(authHeader, "Bearer\t") {
-					http.Error(w, "invalid token", http.StatusUnauthorized)
-					return
-				}
-				http.Error(w, "invalid authorization format", http.StatusUnauthorized)
-				return
-			}
+			parts := strings.SplitN(authHeader, " ", 2)
 			if len(parts) != 2 || parts[0] != "Bearer" {
 				http.Error(w, "invalid authorization format", http.StatusUnauthorized)
 				return
 			}
 
-			claims, err := token.ValidateToken(cfg, parts[1])
+			rawToken := strings.TrimSpace(parts[1])
+			if rawToken == "" {
+				http.Error(w, "invalid token", http.StatusUnauthorized)
+				return
+			}
+
+			claims, err := token.ValidateToken(cfg, rawToken)
 			if err != nil {
 				http.Error(w, "invalid token", http.StatusUnauthorized)
 				return
