@@ -34,9 +34,6 @@ var (
 
 	// ErrInvalidToken is returned when a token is invalid.
 	ErrInvalidToken = errors.New("token: invalid token")
-
-	// ErrExpiredToken is returned when a token has expired.
-	ErrExpiredToken = errors.New("token: token has expired")
 )
 
 // GenerateToken signs the provided claims with the config defaults.
