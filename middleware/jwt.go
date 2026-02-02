@@ -35,6 +35,10 @@ func RequireJWT(cfg token.Config) func(http.Handler) http.Handler {
 				http.Error(w, "invalid token", http.StatusUnauthorized)
 				return
 			}
+			if len(strings.Fields(parts[1])) != 1 {
+				http.Error(w, "invalid authorization format", http.StatusUnauthorized)
+				return
+			}
 
 			claims, err := token.ValidateToken(cfg, rawToken)
 			if err != nil {
