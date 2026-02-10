@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+tasks:
+  test:
+    desc: Run all tests with race detector
+    cmds:
+      - go test -v ./... --race
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
