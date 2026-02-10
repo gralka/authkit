@@ -6,7 +6,7 @@ tasks:
   test:
     desc: Run all tests with race detector
     cmds:
-      - go test -v ./... --race
+      - go test -v -race ./...
   default:
     desc: Show available tasks
     cmds:
