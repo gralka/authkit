@@ -22,10 +22,23 @@ type Config struct {
 	TTL time.Duration
 }
 
+// Validate reports whether the config is usable.
+func (cfg Config) Validate() error {
+	if len(cfg.Secret) == 0 {
+		return ErrSecretRequired
+	}
+	return nil
+}
+
 // Claims represents authkit claims plus standard JWT registered claims.
 type Claims struct {
 	Roles []string `json:"roles,omitempty"`
 	jwt.RegisteredClaims
+}
+
+// SetSubject is a convenience helper for setting the registered "sub" (subject) claim.
+func (c *Claims) SetSubject(subject string) {
+	c.Subject = subject
 }
 
 var (
@@ -38,8 +51,8 @@ var (
 
 // GenerateToken signs the provided claims with the config defaults.
 func GenerateToken(cfg Config, claims Claims) (string, error) {
-	if len(cfg.Secret) == 0 {
-		return "", ErrSecretRequired
+	if err := cfg.Validate(); err != nil {
+		return "", err
 	}
 
 	now := time.Now()
@@ -63,8 +76,8 @@ func GenerateToken(cfg Config, claims Claims) (string, error) {
 
 // ValidateToken parses and validates a token string.
 func ValidateToken(cfg Config, tokenString string) (*Claims, error) {
-	if len(cfg.Secret) == 0 {
-		return nil, ErrSecretRequired
+	if err := cfg.Validate(); err != nil {
+		return nil, err
 	}
 
 	claims := &Claims{}

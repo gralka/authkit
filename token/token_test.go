@@ -97,6 +97,15 @@ func TestGenerateToken_PreservesProvidedClaims(t *testing.T) {
 		t.Fatalf("expected audience %v, got %v", providedAudience, parsed.Audience)
 	}
 }
+
+func TestClaims_SetSubject(t *testing.T) {
+	claims := token.Claims{}
+	claims.SetSubject("user-123")
+
+	if claims.Subject != "user-123" {
+		t.Fatalf("expected subject to be set")
+	}
+}
 func TestValidateToken_SecretRequired(t *testing.T) {
   cfg := token.Config{}
   _, err := token.ValidateToken(cfg, "token")
