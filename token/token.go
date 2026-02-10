@@ -36,7 +36,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// SetSubject sets the registered "sub" claim without exposing jwt.RegisteredClaims.
+// SetSubject is a convenience helper for setting the registered "sub" (subject) claim.
 func (c *Claims) SetSubject(subject string) {
 	c.Subject = subject
 }
